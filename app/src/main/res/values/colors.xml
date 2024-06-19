@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Primary Colors -->
+    <color name="royal_blue">#4169E1</color>
+    <color name="forest_green">#228B22</color>
+    <color name="tomato_red">#FF6347</color>
+    <color name="deep_sky_blue">#00BFFF</color>
+    <color name="goldenrod">#DAA520</color>
+
+    <!-- Accent Colors -->
+    <color name="electric_purple">#BF00FF</color>
+    <color name="aqua">#00FFFF</color>
+    <color name="coral">#FF7F50</color>
+    <color name="spring_green">#00FF7F</color>
+    <color name="turquoise">#40E0D0</color>
+
+    <!-- Neutrals -->
+    <color name="dim_gray">#696969</color>
+    <color name="slate_gray">#708090</color>
+    <color name="light_slate_gray">#778899</color>
+    <color name="ivory">#FFFFF0</color>
+    <color name="lavender">#E6E6FA</color>
+
+    <!-- Pastel Colors -->
+    <color name="pastel_pink">#FFD1DC</color>
+    <color name="pastel_blue">#AEC6CF</color>
+    <color name="pastel_green">#77DD77</color>
+    <color name="pastel_yellow">#FDFD96</color>
+    <color name="pastel_orange">#FFB347</color>
+
+    <!-- Vibrant Colors -->
+    <color name="magenta">#FF00FF</color>
+    <color name="lime">#00FF00</color>
+    <color name="cyan">#00FFFF</color>
+    <color name="orange_red">#FF4500</color>
+    <color name="chartreuse">#7FFF00</color>
+</resources>
