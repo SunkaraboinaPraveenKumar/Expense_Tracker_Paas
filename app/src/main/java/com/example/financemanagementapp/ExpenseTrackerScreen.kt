@@ -84,90 +84,67 @@ fun ExpenseTrackerScreen(
         }
     }
 
-
     val currentIncome = filteredIncomeRecords.sumOf { it.amount }
     val currentExpense = filteredExpenseRecords.sumOf { it.amount }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // HeaderRecord component
-        HeaderRecord(
-            currentDate = currentDate,
-            currentFilterOption = currentFilterOption,
-            onPrevClick = {
-                currentDate = when (currentFilterOption) {
-                    FilterOption.DAILY -> currentDate.minusDays(1)
-                    FilterOption.WEEKLY -> currentDate.minusWeeks(1)
-                    FilterOption.MONTHLY -> currentDate.minusMonths(1)
-                }
-            },
-            onNextClick = {
-                currentDate = when (currentFilterOption) {
-                    FilterOption.DAILY -> currentDate.plusDays(1)
-                    FilterOption.WEEKLY -> currentDate.plusWeeks(1)
-                    FilterOption.MONTHLY -> currentDate.plusMonths(1)
-                }
-            },
-            onFilterOptionSelected = {
-                currentFilterOption = it
-            }
-        )
-
-        // Tab layout
-        val tabs = listOf("Daily", "Monthly", "Calendar", "Notes")
-        var selectedTabIndex by remember { mutableStateOf(0) }
-        TabLayout(tabs, selectedTabIndex) { index ->
-            selectedTabIndex = index
-        }
-
-        // Income and expense overview
-        CurrentMonthCard(
-            currentFilterOption = currentFilterOption,
-            dateRange = dateRange,
-            incomeRecords = filteredIncomeRecords,
-            expenseRecords = filteredExpenseRecords
-        )
-
-        // Action buttons
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
-            Button(
-                onClick = onSetBudgetClick,
-                modifier = Modifier
-                    .fillMaxWidth(0.45f)
-                    .height(56.dp)
-            ) {
-                Text(text = "Set Budget", fontSize = 18.sp)
+            // HeaderRecord component
+            HeaderRecord(
+                currentDate = currentDate,
+                currentFilterOption = currentFilterOption,
+                onPrevClick = {
+                    currentDate = when (currentFilterOption) {
+                        FilterOption.DAILY -> currentDate.minusDays(1)
+                        FilterOption.WEEKLY -> currentDate.minusWeeks(1)
+                        FilterOption.MONTHLY -> currentDate.minusMonths(1)
+                    }
+                },
+                onNextClick = {
+                    currentDate = when (currentFilterOption) {
+                        FilterOption.DAILY -> currentDate.plusDays(1)
+                        FilterOption.WEEKLY -> currentDate.plusWeeks(1)
+                        FilterOption.MONTHLY -> currentDate.plusMonths(1)
+                    }
+                },
+                onFilterOptionSelected = {
+                    currentFilterOption = it
+                }
+            )
+
+            // Tab layout
+            val tabs = listOf("Daily", "Monthly", "Calendar", "Notes")
+            var selectedTabIndex by remember { mutableStateOf(0) }
+            TabLayout(tabs, selectedTabIndex) { index ->
+                selectedTabIndex = index
             }
-            Button(
-                onClick = onViewRecordsClick,
+
+            // Income and expense overview
+            CurrentMonthCard(
+                currentFilterOption = currentFilterOption,
+                dateRange = dateRange,
+                incomeRecords = filteredIncomeRecords,
+                expenseRecords = filteredExpenseRecords
+            )
+
+            // Action buttons
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth(0.45f)
-                    .height(56.dp)
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(text = "View Records", fontSize = 18.sp)
-            }
-            Button(
-                onClick = onViewDebtsClick,
-                modifier = Modifier
-                    .fillMaxWidth(0.45f)
-                    .height(56.dp)
-            ) {
-                Text(text = "View Debts", fontSize = 18.sp)
-            }
-            Button(
-                onClick = onViewAnalysisClick,
-                modifier = Modifier
-                    .fillMaxWidth(0.45f)
-                    .height(56.dp)
-            ) {
-                Text(text = "View Analysis", fontSize = 18.sp)
+                Button(
+                    onClick = onViewDebtsClick,
+                    modifier = Modifier
+                        .fillMaxWidth(0.45f)
+                        .height(56.dp)
+                ) {
+                    Text(text = "View Debts", fontSize = 18.sp)
+                }
             }
         }
 
@@ -175,7 +152,7 @@ fun ExpenseTrackerScreen(
         Box(
             contentAlignment = Alignment.BottomEnd,
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(16.dp)
         ) {
             IconButton(
@@ -195,4 +172,5 @@ fun ExpenseTrackerScreen(
         }
     }
 }
+
 

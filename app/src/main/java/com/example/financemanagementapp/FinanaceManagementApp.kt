@@ -18,14 +18,11 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-
-//private var expenseRecords by mutableStateOf(mutableListOf<ExpenseRecord>()) // Mutable state for expense records
-//private var budgetedCategories by mutableStateOf(mutableListOf<BudgetedCategory>()) // Mutable state for budgeted categories
-
+import androidx.navigation.NavController
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun FinanceManagementApp(context: Context) {
+fun FinanceManagementApp(context: Context,navController: NavController,categoryToEdit:String?) {
     val viewModel = remember { ExpenseRecordsViewModel(context) }
     val navController = rememberNavController()
 
@@ -94,20 +91,18 @@ fun FinanceManagementApp(context: Context) {
         composable("budgetedCategories") { backStackEntry ->
             MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
                 CrossfadeScreen(backStackEntry.id) {
-//                    val viewModel: ExpenseRecordsViewModel = viewModel()
-
-                    // Collect expenseRecords and budgetedCategories as State
                     val expenseRecords by viewModel.expenseRecords.collectAsState()
-//                    val budgetedCategories by viewModel.budgetedCategories.collectAsState()
-
                     BudgetedCategoriesScreen(
+                        navController = navController,
                         expenseRecordsBudgeted = expenseRecords,
                         onBack = { navController.popBackStack() },
-                        viewModel = viewModel
+                        viewModel = viewModel,
+                        categoryToEdit = categoryToEdit
                     )
                 }
             }
         }
+
 
         composable("addExpense") { backStackEntry ->
             CrossfadeScreen(backStackEntry.id) {
@@ -168,15 +163,11 @@ fun FinanceManagementApp(context: Context) {
         composable("settings") {
             SettingsScreen()
         }
-        composable("settings") {
-            // Content for settings screen
-            SettingsScreen()
+        composable("deleteReset") {
 
         }
-        composable("deleteReset") {
-            // Content for delete/reset screen
-        }
         composable("help") {
+            HelpScreen()
             // Content for help screen
         }
         composable("addCategories") {

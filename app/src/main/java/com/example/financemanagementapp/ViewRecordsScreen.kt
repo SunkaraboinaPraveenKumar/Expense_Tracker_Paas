@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.List
@@ -181,7 +183,7 @@ fun HeaderRecord(
     onNextClick: () -> Unit,
     onFilterOptionSelected: (FilterOption) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
 
     // Define the date formats for different filter options
     val dailyFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d, yyyy")
@@ -228,7 +230,7 @@ fun HeaderRecord(
             )
         }
 
-        IconButton(onClick = { expanded = true }) {
+        IconButton(onClick = { showDialog = true }) {
             Icon(
                 imageVector = Icons.Default.List,
                 contentDescription = "Filter",
@@ -237,34 +239,13 @@ fun HeaderRecord(
             )
         }
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(
-                onClick = {
-                    onFilterOptionSelected(FilterOption.DAILY)
-                    expanded = false
-                }
-            ) {
-                Text("Daily")
-            }
-            DropdownMenuItem(
-                onClick = {
-                    onFilterOptionSelected(FilterOption.WEEKLY)
-                    expanded = false
-                }
-            ) {
-                Text("Weekly")
-            }
-            DropdownMenuItem(
-                onClick = {
-                    onFilterOptionSelected(FilterOption.MONTHLY)
-                    expanded = false
-                }
-            ) {
-                Text("Monthly")
-            }
+        // Display the filter dialog if showDialog is true
+        if (showDialog) {
+            FilterDialog(
+                currentFilterOption = currentFilterOption,
+                onFilterOptionSelected = onFilterOptionSelected,
+                onDismissRequest = { showDialog = false }
+            )
         }
     }
 }
@@ -357,4 +338,47 @@ fun ExpenseRecordItem(
             }
         }
     }
+}
+
+@Composable
+fun FilterDialog(
+    currentFilterOption: FilterOption,
+    onFilterOptionSelected: (FilterOption) -> Unit,
+    onDismissRequest: () -> Unit
+) {
+    androidx.compose.material.AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(text = "Select Filter Option")
+        },
+        text = {
+            Column {
+                FilterOption.values().forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onFilterOptionSelected(option)
+                                onDismissRequest()
+                            }
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (currentFilterOption == option) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                tint = Color.Green
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = option.name, fontSize = 18.sp)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            // Empty confirm button, actions are handled on item click
+        }
+    )
 }

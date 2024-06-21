@@ -28,10 +28,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,12 +53,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.navigation.NavHostController
 import com.example.financemanagementapp.BudgetedCategory
 import com.example.financemanagementapp.ExpenseRecordEntity
 import com.example.financemanagementapp.ExpenseRecordsViewModel
 import com.example.financemanagementapp.Header
 import com.example.financemanagementapp.Icon
 import com.example.financemanagementapp.R
+import com.example.financemanagementapp.sendBudgetExceededNotification
 import java.time.YearMonth
 
 val expenseList: MutableList<Icon> = mutableListOf(
@@ -79,16 +85,16 @@ val expenseList: MutableList<Icon> = mutableListOf(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BudgetedCategoriesScreen(
+    navController:NavHostController,
     viewModel: ExpenseRecordsViewModel,
     expenseRecordsBudgeted: List<ExpenseRecordEntity>,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    categoryToEdit: String?
 ) {
     var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
 
-    // Collect budgeted categories from ViewModel
     val budgetedCategoriesState by viewModel.budgetedCategories.collectAsState()
 
-    // Filtered categories based on current year and month
     val filteredBudgetedCategories = remember(budgetedCategoriesState, currentYearMonth) {
         budgetedCategoriesState.filter {
             YearMonth.from(it.monthYear) == currentYearMonth
@@ -96,29 +102,31 @@ fun BudgetedCategoriesScreen(
     }
 
     var editingCategory by remember { mutableStateOf<BudgetedCategory?>(null) }
+    LaunchedEffect(categoryToEdit) {
+        categoryToEdit?.let {
+            val category = filteredBudgetedCategories.find { it.category == categoryToEdit }
+            if (category != null) {
+                editingCategory = category
+            }
+        }
+    }
 
-    // Update filtered categories whenever the month changes
     fun updateFilteredCategories(yearMonth: YearMonth) {
-        // No need to re-filter here, the remember block will handle it
         currentYearMonth = yearMonth
     }
 
-    // Handle editing a category
     fun handleEdit(budgetedCategory: BudgetedCategory) {
         editingCategory = budgetedCategory
     }
 
-    // Handle deleting a category
     fun handleDelete(budgetedCategory: BudgetedCategory) {
         viewModel.deleteBudgetedCategory(budgetedCategory)
     }
 
-    // Calculate the total income for the current month
     val totalIncome = expenseRecordsBudgeted
         .filter { it.isIncome && YearMonth.from(it.dateTime) == currentYearMonth }
         .sumOf { it.amount }
 
-    // Calculate the total budgeted amount and the total spent amount for the progress bar
     val totalBudgeted = filteredBudgetedCategories.sumOf { it.limit }
     val totalSpent = filteredBudgetedCategories.sumOf { budgetedCategory ->
         expenseRecordsBudgeted
@@ -130,22 +138,25 @@ fun BudgetedCategoriesScreen(
     }
     val budgetUtilization = if (totalBudgeted > 0) (totalSpent / totalBudgeted).toFloat() else 0f
 
+    val remainingIncome = totalIncome - totalBudgeted
+
     Column(
         modifier = Modifier
             .background(Color.White)
             .fillMaxSize()
     ) {
-        // Header to navigate between months
-        Header(currentYearMonth, onPrevClick = {
-            updateFilteredCategories(currentYearMonth.minusMonths(1))
-        }, onNextClick = {
-            updateFilteredCategories(currentYearMonth.plusMonths(1))
-        })
+        Header(
+            currentYearMonth,
+            onPrevClick = {
+                updateFilteredCategories(currentYearMonth.minusMonths(1))
+            },
+            onNextClick = {
+                updateFilteredCategories(currentYearMonth.plusMonths(1))
+            }
+        )
 
-        // Card showing total income
         IncomeCard(totalIncome = totalIncome)
 
-        // Progress bar showing budget utilization
         BudgetUtilizationProgressBar(
             totalBudgeted = totalBudgeted,
             totalSpent = totalSpent,
@@ -166,18 +177,17 @@ fun BudgetedCategoriesScreen(
 
         editingCategory?.let { category ->
             EditBudgetedCategoryDialog(
-                budgetedCategory = category,
+                budgetedCategory = editingCategory!!,
+                remainingIncome = remainingIncome,
                 onDismiss = { editingCategory = null },
                 onSave = { updatedCategory ->
-                    viewModel.insertOrUpdateBudgetedCategory(updatedCategory)
+                    viewModel.updateBudgetedCategory(updatedCategory)
                     editingCategory = null
                 }
             )
         }
     }
 }
-
-
 
 @Composable
 fun IncomeCard(totalIncome: Double) {
@@ -299,12 +309,24 @@ fun BudgetedCategoriesList(
     onEditClick: (BudgetedCategory) -> Unit,
     onDeleteClick: (BudgetedCategory) -> Unit
 ) {
+    val sortedCategories = remember(filteredBudgetedCategories) {
+        filteredBudgetedCategories.sortedByDescending { category ->
+            val totalSpent = expenseRecordsBudgeted
+                .filter {
+                    it.category == category.category &&
+                            YearMonth.from(it.date) == YearMonth.from(category.monthYear)
+                }
+                .sumOf { it.amount }
+            totalSpent >= category.limit // True for over-limit categories
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        items(filteredBudgetedCategories) { budgetedCategory ->
+        items(sortedCategories) { budgetedCategory ->
             val totalSpent = expenseRecordsBudgeted
                 .filter {
                     it.category == budgetedCategory.category &&
@@ -313,6 +335,11 @@ fun BudgetedCategoriesList(
                 .sumOf { it.amount }
 
             val isOverLimit = totalSpent > budgetedCategory.limit
+            if (isOverLimit) {
+                val context = LocalContext.current
+                sendBudgetExceededNotification(context, budgetedCategory.category)
+            }
+
             BudgetedCategoryRow(
                 budgetedCategory.copy(
                     spent = totalSpent,
@@ -325,6 +352,8 @@ fun BudgetedCategoriesList(
         }
     }
 }
+
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -383,12 +412,12 @@ fun BudgetedCategoryRow(
                 Text(
                     text = "Spent: ${budgetedCategory.spent}",
                     fontSize = 16.sp,
-                    color = Color.Black
+                    color = if (isOverLimit) Color.Red else Color.Black
                 )
                 Text(
                     text = "Remaining: ${budgetedCategory.remaining}",
                     fontSize = 16.sp,
-                    color = Color.Black
+                    color = if (isOverLimit) Color.Red else Color.Black
                 )
             }
         }
@@ -399,9 +428,15 @@ fun BudgetedCategoryRow(
         ) {
             IconButton(
                 onClick = { onEditClick(budgetedCategory) },
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier
+                    .padding(4.dp)
+                    .background(if (isOverLimit) Color.Red else Color.Transparent, shape = CircleShape) // Highlight background
             ) {
-                Icon(Icons.Filled.Edit, contentDescription = "Edit")
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = "Edit",
+                    tint = if (isOverLimit) Color.White else Color.Black // Highlight icon color
+                )
             }
             IconButton(
                 onClick = { onDeleteClick(budgetedCategory) },
@@ -412,59 +447,94 @@ fun BudgetedCategoryRow(
         }
     }
 }
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EditBudgetedCategoryDialog(
     budgetedCategory: BudgetedCategory,
+    remainingIncome: Double,
     onDismiss: () -> Unit,
-    onSave: (BudgetedCategory) -> Unit
+    onSave: (BudgetedCategory) -> Unit,
+    title: String = "Edit Budgeted Category", // Default title, can be customized
+    confirmButtonText: String = "Save", // Default confirm button text, can be customized
+    cancelButtonText: String = "Cancel" // Default cancel button text, can be customized
 ) {
     var limit by remember { mutableStateOf(budgetedCategory.limit.toString()) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    fun validateAndSave() {
+        val newLimit = limit.toDoubleOrNull()
+        if (newLimit == null) {
+            errorMessage = "Invalid limit. Please enter a valid number."
+        } else if (newLimit > remainingIncome) {
+            errorMessage = "Limit exceeds remaining income of $${String.format("%.2f", remainingIncome)}."
+        } else {
+            onSave(budgetedCategory.copy(limit = newLimit))
+            onDismiss()
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Edit Budgeted Category") },
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
         confirmButton = {
             Button(
-                onClick = {
-                    onSave(
-                        budgetedCategory.copy(
-                            limit = limit.toDouble()
-                        )
-                    )
-                    onDismiss()
-                }
+                onClick = { validateAndSave() },
+                modifier = Modifier.padding(8.dp)
             ) {
-                Text(text = "Save")
+                Text(text = confirmButtonText)
             }
         },
         dismissButton = {
-            Button(
-                onClick = onDismiss
+            OutlinedButton(
+                onClick = onDismiss,
+                modifier = Modifier.padding(8.dp)
             ) {
-                Text(text = "Cancel")
+                Text(text = cancelButtonText)
             }
         },
         text = {
-            Column {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
                 Text(
                     text = "Category: ${budgetedCategory.category}",
-                    fontSize = 16.sp,
-                    color = Color.Black
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = limit,
-                    onValueChange = { limit = it },
+                    onValueChange = {
+                        limit = it
+                        errorMessage = ""
+                    },
                     label = { Text("Budget Limit") },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Done
                     ),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = errorMessage.isNotEmpty()
                 )
+                if (errorMessage.isNotEmpty()) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
         }
     )
 }
+
