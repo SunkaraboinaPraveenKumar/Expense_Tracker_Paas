@@ -22,11 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.finance_expense_tracker.Debt
 import com.example.finance_expense_tracker.NotificationScheduler
+import com.example.financemanagementapp.R
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -71,7 +73,7 @@ fun DebtForm(onAddDebt: (Debt) -> Unit) {
         cursorColor = Color.Black, // Not needed since readOnly, but useful for reference
         focusedBorderColor = Color.Black,
         unfocusedBorderColor = Color.Black,
-        errorBorderColor = Color.Red
+        errorBorderColor = colorResource(id = R.color.light_salmon)
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -92,7 +94,7 @@ fun DebtForm(onAddDebt: (Debt) -> Unit) {
         if (amountError != null) {
             Text(
                 text = amountError!!,
-                color = Color.Red,
+                color = colorResource(id = R.color.light_salmon),
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
@@ -107,7 +109,7 @@ fun DebtForm(onAddDebt: (Debt) -> Unit) {
         if (toError != null) {
             Text(
                 text = toError!!,
-                color = Color.Red,
+                color = colorResource(id = R.color.light_salmon),
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
@@ -128,7 +130,7 @@ fun DebtForm(onAddDebt: (Debt) -> Unit) {
         if (dateError != null) {
             Text(
                 text = dateError!!,
-                color = Color.Red,
+                color = colorResource(id = R.color.light_salmon),
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }

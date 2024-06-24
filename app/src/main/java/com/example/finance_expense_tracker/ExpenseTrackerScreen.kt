@@ -1,5 +1,6 @@
 package com.example.finance_expense_tracker
 
+import SettingsViewModel
 import TabLayout
 import android.app.DatePickerDialog
 import android.content.Context
@@ -51,7 +52,8 @@ fun ExpenseTrackerScreen(
     onViewRecordsClick: () -> Unit,
     onSetBudgetClick: () -> Unit,
     onViewDebtsClick: () -> Unit,
-    onViewAnalysisClick: () -> Unit
+    onViewAnalysisClick: () -> Unit,
+    settingsViewModel:SettingsViewModel
 ) {
     val viewModel: ExpenseRecordsViewModel = remember {
         ExpenseRecordsViewModel(navController.context)
@@ -142,11 +144,13 @@ fun ExpenseTrackerScreen(
             }
 
             // Current month card
+            val currencySymbol = settingsViewModel.getCurrencySymbol()
             CurrentMonthCard(
                 currentFilterOption = currentFilterOption,
                 dateRange = dateRange,
                 incomeRecords = filteredIncomeRecords,
-                expenseRecords = filteredExpenseRecords
+                expenseRecords = filteredExpenseRecords,
+                currencySymbol = currencySymbol
             )
 
             Column(

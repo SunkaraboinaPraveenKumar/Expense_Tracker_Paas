@@ -1,4 +1,3 @@
-
 package com.example.finance_expense_tracker
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -182,8 +181,3 @@ fun RegistrationScreen(
         }
     }
 }
-
-
-
-
-

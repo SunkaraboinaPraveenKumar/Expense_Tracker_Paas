@@ -1,6 +1,7 @@
 package com.example.finance_expense_tracker
-
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -8,9 +9,18 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Database(
-    entities = [ExpenseRecordEntity::class, BudgetedCategory::class, Transaction::class, RegisterEntity::class],
-    version = 3
+    entities = [
+        ExpenseRecordEntity::class,
+        BudgetedCategory::class,
+        Transaction::class,
+        RegisterEntity::class,
+        Income::class,
+        Expense::class,
+        SettingsEntity::class
+    ],
+    version = 4
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -19,6 +29,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun budgetedCategoryDao(): BudgetedCategoryDao
     abstract fun expenseRecordDao(): ExpenseRecordDao
     abstract fun loginRegisterDao(): LoginRegisterDao
+    abstract fun incomeDao(): IncomeDao
+    abstract fun expenseDao(): ExpenseDao
+
+    abstract fun settingsDao():SettingsDao
 
     companion object {
         @Volatile
@@ -33,6 +47,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .addMigrations(MIGRATION_1_2)
                     .addMigrations(MIGRATION_2_3)
+                    .addMigrations(MIGRATION_3_4)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
@@ -61,20 +76,20 @@ abstract class AppDatabase : RoomDatabase() {
         // Migration from version 1 to 2
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Handle migration, including altering or dropping the `date_time` column
+                // Handle migration, including altering or dropping the date_time column
                 db.execSQL("ALTER TABLE expense_records RENAME TO temp_expense_records")
                 db.execSQL(
                     """
-            CREATE TABLE IF NOT EXISTS `expense_records` (
-                `accountType` TEXT NOT NULL,
-                `amount` REAL NOT NULL,
-                `category` TEXT NOT NULL,
-                `date` TEXT NOT NULL,
-                `dateTime` TEXT,
-                `icon` INTEGER NOT NULL,
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                `isIncome` INTEGER NOT NULL,
-                `notes` TEXT NOT NULL
+            CREATE TABLE IF NOT EXISTS expense_records (
+                accountType TEXT NOT NULL,
+                amount REAL NOT NULL,
+                category TEXT NOT NULL,
+                date TEXT NOT NULL,
+                dateTime TEXT,
+                icon INTEGER NOT NULL,
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                isIncome INTEGER NOT NULL,
+                notes TEXT NOT NULL
             )
             """
                 )
@@ -84,17 +99,29 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-
         // Migration from version 2 to 3: Create RegisterEntity table
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
                     """
-                    CREATE TABLE IF NOT EXISTS `register_records` (
-                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        `username` TEXT NOT NULL,
-                        `password` TEXT NOT NULL,
-                        `confirmPassword` TEXT NOT NULL
+                    CREATE TABLE IF NOT EXISTS register_records (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        username TEXT NOT NULL,
+                        password TEXT NOT NULL,
+                        confirmPassword TEXT NOT NULL
+                    )
+                    """
+                )
+            }
+        }
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS settings (
+                        id INTEGER PRIMARY KEY NOT NULL,
+                        currencySymbol TEXT NOT NULL,
+                        uiMode TEXT NOT NULL
                     )
                     """
                 )

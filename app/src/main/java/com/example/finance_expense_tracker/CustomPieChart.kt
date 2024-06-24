@@ -3,6 +3,7 @@ package com.example.finance_expense_tracker
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -207,7 +208,12 @@ fun CustomPieChart(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = label,
-                        color = if (isSelected) colorMap[label]!!.copy(alpha = 0.8f) else Color.Black
+                        color = if(isSystemInDarkTheme()){
+                            if (isSelected) colorMap[label]!!.copy(alpha = 0.8f) else Color.White
+                        }
+                        else{
+                            if (isSelected) colorMap[label]!!.copy(alpha = 0.8f) else Color.Black
+                        }
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
@@ -225,7 +231,12 @@ fun CustomPieChart(
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
                         text = "${"%.1f".format((value / totalValue) * 100)}%",
-                        color = if (isSelected) colorMap[label]!!.copy(alpha = 0.8f) else Color.Black
+                        color = if(isSystemInDarkTheme()){
+                            if (isSelected) colorMap[label]!!.copy(alpha = 0.8f) else Color.White
+                        }
+                        else{
+                            if (isSelected) colorMap[label]!!.copy(alpha = 0.8f) else Color.Black
+                        }
                     )
                 }
             }

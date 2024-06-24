@@ -70,11 +70,15 @@ class SmsReceiver : BroadcastReceiver() {
     }
 
     private fun extractAmount(message: String): Double {
-        // Extract amount using regex
-        val regex = Regex("""\b\d+(\.\d{1,2})?\b""")
+        // Improved regex to capture the amount in different patterns
+        val regex = Regex("""(?:credited|debited)\s*(?:by\s*)?(?:Rs\.?\s?|INR\s?)?(\d+(?:\.\d{1,2})?)""", RegexOption.IGNORE_CASE)
         val match = regex.find(message)
-        val amount = match?.value?.toDoubleOrNull() ?: 0.0
-        Log.d(TAG, "Extracted amount: $amount")
+        val amountStr = match?.groups?.get(1)?.value
+        val amount = amountStr?.toDoubleOrNull() ?: 0.0
+
+        // Debugging output (optional)
+        println("Matched amount: $amountStr")
+
         return amount
     }
 
@@ -95,7 +99,7 @@ class SmsReceiver : BroadcastReceiver() {
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.notification_icon)
             .setContentTitle(if (isIncome) "Income Detected" else "Expense Detected")
-            .setContentText("Amount: $$amount")
+            .setContentText("Amount: ₹$amount")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

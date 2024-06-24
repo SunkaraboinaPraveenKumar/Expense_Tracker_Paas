@@ -27,7 +27,8 @@ fun CurrentMonthCard(
     currentFilterOption: FilterOption,
     dateRange: Pair<LocalDate, LocalDate>,
     incomeRecords: List<ExpenseRecordEntity>,
-    expenseRecords: List<ExpenseRecordEntity>
+    expenseRecords: List<ExpenseRecordEntity>,
+    currencySymbol: String // Added currency symbol parameter
 ) {
     val startDate = dateRange.first
     val endDate = dateRange.second
@@ -68,13 +69,13 @@ fun CurrentMonthCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Income: $${String.format("%.2f", currentIncome)}",
+                    text = "Income: $currencySymbol${String.format("%.2f", currentIncome)}", // Updated to use currency symbol
                     fontSize = 16.sp,
                     color = Color(0xFF4CAF50) // Green color for income
                 )
                 Spacer(modifier = Modifier.width(16.dp)) // Add gap between income and expense
                 Text(
-                    text = "Expense: $${String.format("%.2f", currentExpense)}",
+                    text = "Expense: $currencySymbol${String.format("%.2f", currentExpense)}", // Updated to use currency symbol
                     fontSize = 16.sp,
                     color = Color(0xFFC37A5C) // Red color for expense
                 )
@@ -85,7 +86,7 @@ fun CurrentMonthCard(
                     .padding(bottom = 8.dp),
             ) {
                 Text(
-                    text = "Total: $${String.format("%.2f", currentIncome - currentExpense)}",
+                    text = "Total: $currencySymbol${String.format("%.2f", currentIncome - currentExpense)}", // Updated to use currency symbol
                     fontSize = 16.sp,
                     color = Color(0xFF5C61C3), // Blue color for total balance
                     modifier = Modifier.align(Alignment.CenterHorizontally) // Center the text

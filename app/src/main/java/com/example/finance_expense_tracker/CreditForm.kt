@@ -22,11 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.finance_expense_tracker.Credit
 import com.example.finance_expense_tracker.NotificationScheduler
+import com.example.financemanagementapp.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -72,7 +74,7 @@ fun CreditForm(onAddCredit: (Credit) -> Unit) {
         cursorColor = Color.Black,
         focusedBorderColor = Color.Black,
         unfocusedBorderColor = Color.Black,
-        errorBorderColor = Color.Red
+        errorBorderColor = colorResource(id = R.color.light_salmon)
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -93,7 +95,7 @@ fun CreditForm(onAddCredit: (Credit) -> Unit) {
         if (amountError != null) {
             Text(
                 text = amountError!!,
-                color = Color.Red,
+                color = colorResource(id = R.color.light_salmon),
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
@@ -108,7 +110,7 @@ fun CreditForm(onAddCredit: (Credit) -> Unit) {
         if (fromError != null) {
             Text(
                 text = fromError!!,
-                color = Color.Red,
+                color = colorResource(id = R.color.light_salmon),
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
@@ -129,7 +131,7 @@ fun CreditForm(onAddCredit: (Credit) -> Unit) {
         if (dateError != null) {
             Text(
                 text = dateError!!,
-                color = Color.Red,
+                color=colorResource(id = R.color.light_salmon),
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }

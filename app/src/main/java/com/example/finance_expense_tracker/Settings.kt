@@ -1,5 +1,9 @@
 package com.example.finance_expense_tracker
 
+import SettingsViewModel
+import UiMode
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,15 +35,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
+fun SettingsScreen(viewModel: SettingsViewModel) {
     var showUiModeDialog by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
     val selectedUiMode = viewModel.selectedUiMode
     val selectedCurrency = viewModel.selectedCurrency
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -76,7 +81,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
                     options = UiMode.values().map { it.name },
                     selectedOption = selectedUiMode.name,
                     onOptionSelected = { selected ->
-                        viewModel.setSelectedUiMode(UiMode.valueOf(selected))
+                        viewModel.putSelectedUiMode(UiMode.valueOf(selected))
                         showUiModeDialog = false
                     },
                     onDismiss = { showUiModeDialog = false }
@@ -93,11 +98,11 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
                         "GBP - Great British Pound (£)",
                         "EUR - Euro (€)",
                         "JPY - Japanese Yen (¥)"
-
                     ),
                     selectedOption = selectedCurrency,
                     onOptionSelected = { selected ->
-                        viewModel.setSelectedCurrency(selected.split(" - ")[0])
+                        val currencyCode = selected.split(" - ")[0]
+                        viewModel.putSelectedCurrency(currencyCode)
                         showCurrencyDialog = false
                     },
                     onDismiss = { showCurrencyDialog = false }
@@ -106,7 +111,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
         }
     }
 
-// Effect to handle UI mode changes
+    // Effect to handle UI mode changes
     LaunchedEffect(selectedUiMode) {
         when (selectedUiMode) {
             UiMode.Light -> {
@@ -118,6 +123,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
             UiMode.SystemDefault -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
             }
+            else -> {}
         }
     }
 }
@@ -208,8 +214,4 @@ fun RadioOption(
         Spacer(modifier = Modifier.width(8.dp))
         Text(text = text, style = MaterialTheme.typography.body1)
     }
-}
-
-enum class UiMode {
-    Light, Dark, SystemDefault
 }

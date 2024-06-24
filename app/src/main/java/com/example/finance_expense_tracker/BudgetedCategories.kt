@@ -56,27 +56,8 @@ import com.example.finance_expense_tracker.ExpenseRecordsViewModel
 import com.example.finance_expense_tracker.Header
 import com.example.finance_expense_tracker.Icon
 import com.example.finance_expense_tracker.sendBudgetExceededNotification
-import com.example.financemanagementapp.R
 import java.time.YearMonth
 
-val expenseList: MutableList<Icon> = mutableListOf(
-    Icon("Baby", R.drawable.milk_bottle),
-    Icon("Beauty", R.drawable.beauty),
-    Icon("Bills", R.drawable.bill),
-    Icon("Car", R.drawable.car_wash),
-    Icon("Clothing", R.drawable.clothes_hanger),
-    Icon("Education", R.drawable.education),
-    Icon("Electronics", R.drawable.cpu),
-    Icon("Entertainment", R.drawable.confetti),
-    Icon("Food", R.drawable.diet),
-    Icon("Health", R.drawable.better_health),
-    Icon("Home", R.drawable.house),
-    Icon("Insurance", R.drawable.insurance),
-    Icon("Shopping", R.drawable.bag),
-    Icon("Social", R.drawable.social_media),
-    Icon("Sport", R.drawable.trophy),
-    Icon("Transportation", R.drawable.transportation)
-)
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -85,8 +66,17 @@ fun BudgetedCategoriesScreen(
     viewModel: ExpenseRecordsViewModel,
     expenseRecordsBudgeted: List<ExpenseRecordEntity>,
     onBack: () -> Unit,
-    categoryToEdit: String?
+    categoryToEdit: String?,
+    settingsViewModel: SettingsViewModel
 ) {
+    val expenseListState = viewModel.expenseList.collectAsState()
+    val expenseList = expenseListState.value
+    val expenseIcons: List<Icon> = expenseList.map { expense -> // Replace with your logic
+        Icon(expense.name, expense.iconResId)
+    }
+    val categories = expenseList.map{
+        it.name
+    }
     var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
 
     val budgetedCategoriesState by viewModel.budgetedCategories.collectAsState()
@@ -151,12 +141,13 @@ fun BudgetedCategoriesScreen(
             }
         )
 
-        IncomeCard(totalIncome = totalIncome)
+        IncomeCard(totalIncome = totalIncome,settingsViewModel=settingsViewModel)
 
         BudgetUtilizationProgressBar(
             totalBudgeted = totalBudgeted,
             totalSpent = totalSpent,
-            budgetUtilization = budgetUtilization
+            budgetUtilization = budgetUtilization,
+            settingsViewModel=settingsViewModel
         )
 
         if (filteredBudgetedCategories.isEmpty()) {
@@ -167,7 +158,8 @@ fun BudgetedCategoriesScreen(
                 expenseRecordsBudgeted = expenseRecordsBudgeted,
                 currentYearMonth = currentYearMonth,
                 onEditClick = ::handleEdit,
-                onDeleteClick = ::handleDelete
+                onDeleteClick = ::handleDelete,
+                expenseIcons=expenseIcons
             )
         }
 
@@ -185,8 +177,9 @@ fun BudgetedCategoriesScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun IncomeCard(totalIncome: Double) {
+fun IncomeCard(totalIncome: Double,settingsViewModel: SettingsViewModel) {
     Box(
         modifier = Modifier
             .padding(16.dp)
@@ -195,6 +188,7 @@ fun IncomeCard(totalIncome: Double) {
             .padding(16.dp)
     ) {
         Column {
+            val selectedCurrency = settingsViewModel.getCurrencySymbol()
             Text(
                 text = "Total Income",
                 fontSize = 18.sp,
@@ -202,7 +196,7 @@ fun IncomeCard(totalIncome: Double) {
                 color = Color(0xFF1976D2) // Dark blue text
             )
             Text(
-                text = "$${String.format("%.2f", totalIncome)}",
+                text = "$selectedCurrency${String.format("%.2f", totalIncome)}",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1976D2)
@@ -211,17 +205,20 @@ fun IncomeCard(totalIncome: Double) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BudgetUtilizationProgressBar(
     totalBudgeted: Double,
     totalSpent: Double,
-    budgetUtilization: Float
+    budgetUtilization: Float,
+    settingsViewModel: SettingsViewModel
 ) {
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .fillMaxWidth()
     ) {
+        val selectedCurrency = settingsViewModel.getCurrencySymbol()
         Text(
             text = "Budget Utilization",
             fontSize = 16.sp,
@@ -243,12 +240,12 @@ fun BudgetUtilizationProgressBar(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Spent: $${formatAmount(totalSpent)}",
+                text = "Spent: $selectedCurrency${formatAmount(totalSpent)}",
                 fontSize = 20.sp,
                 color = Color.Red // Spent amount in red
             )
             Text(
-                text = "Budgeted: $${formatAmount(totalBudgeted)}",
+                text = "Budgeted: $selectedCurrency${formatAmount(totalBudgeted)}",
                 fontSize = 20.sp,
                 color = Color.Green // Budgeted amount in green
             )
@@ -296,7 +293,8 @@ fun BudgetedCategoriesList(
     expenseRecordsBudgeted: List<ExpenseRecordEntity>,
     currentYearMonth: YearMonth,
     onEditClick: (BudgetedCategory) -> Unit,
-    onDeleteClick: (BudgetedCategory) -> Unit
+    onDeleteClick: (BudgetedCategory) -> Unit,
+    expenseIcons: List<Icon>
 ) {
     val sortedCategories = remember(filteredBudgetedCategories) {
         filteredBudgetedCategories.sortedByDescending { category ->
@@ -336,7 +334,8 @@ fun BudgetedCategoriesList(
                 ),
                 isOverLimit,
                 onEditClick = { onEditClick(it) },
-                onDeleteClick = { onDeleteClick(it) }
+                onDeleteClick = { onDeleteClick(it) },
+                expenseIcons=expenseIcons
             )
         }
     }
@@ -348,7 +347,8 @@ fun BudgetedCategoryRow(
     budgetedCategory: BudgetedCategory,
     isOverLimit: Boolean,
     onEditClick: (BudgetedCategory) -> Unit,
-    onDeleteClick: (BudgetedCategory) -> Unit
+    onDeleteClick: (BudgetedCategory) -> Unit,
+    expenseIcons: List<Icon>
 ) {
     Column(
         modifier = Modifier
@@ -367,7 +367,7 @@ fun BudgetedCategoryRow(
                     .size(36.dp)
                     .background(Color.Gray, CircleShape)
             ) {
-                val icon = expenseList.find { it.name == budgetedCategory.category }
+                val icon = expenseIcons.find { it.name == budgetedCategory.category }
                 if (icon != null) {
                     Image(
                         painter = painterResource(id = icon.resourceId),
@@ -429,7 +429,7 @@ fun BudgetedCategoryRow(
                 onClick = { onDeleteClick(budgetedCategory) },
                 modifier = Modifier.padding(4.dp)
             ) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete")
+                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = Color.Black)
             }
         }
     }

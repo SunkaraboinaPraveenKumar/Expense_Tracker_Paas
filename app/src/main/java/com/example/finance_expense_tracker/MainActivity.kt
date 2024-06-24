@@ -1,5 +1,4 @@
 package com.example.finance_expense_tracker
-
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -13,6 +12,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -31,7 +31,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -56,14 +55,105 @@ class MainActivity : ComponentActivity() {
         createNotificationChannelBudget(this)
         // Create notification channel if necessary
         createNotificationChannel(this)
-        // Request notification permissions
-        requestNotificationPermissions()
+
+        // Request necessary permissions
+        requestPermissions()
+    }
+
+    // Request SMS and notification permissions
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun requestPermissions() {
+        val permissionsNeeded = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.READ_SMS)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        if (permissionsNeeded.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsNeeded.toTypedArray(), SMS_PERMISSION_REQUEST_CODE)
+            proceedToApp()
+        } else {
+            // All permissions already granted, proceed to set the content view
+            proceedToApp()
+        }
+    }
+
+    // Handle the result of permission requests
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == SMS_PERMISSION_REQUEST_CODE) {
+            var allPermissionsGranted = true
+            for (result in grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allPermissionsGranted = false
+                    break
+                }
+            }
+
+            if (allPermissionsGranted) {
+                Toast.makeText(this, "Permissions granted.", Toast.LENGTH_SHORT).show()
+                // Proceed to set the content view
+                proceedToApp()
+            } else {
+                Toast.makeText(this, "Permissions denied.", Toast.LENGTH_SHORT).show()
+                proceedToApp()
+            }
+        }
+    }
+
+    // Proceed to set the content view and handle any incoming intent
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun proceedToApp() {
         // Handle any incoming intent
         handleIncomingIntent(intent)
 
         // Set the content view using Jetpack Compose
         setContent {
             FinanceManagementAppTheme {
+                val viewModel: ExpenseRecordsViewModel by viewModels { ExpenseRecordsViewModelFactory(applicationContext) }
+                val incomeList = listOf(
+                    Income(name = "Awards", iconResId = R.drawable.trophy),
+                    Income(name ="Coupons", iconResId =R.drawable.coupons),
+                    Income(name ="Grants", iconResId =R.drawable.grants),
+                    Income(name ="Lottery",iconResId = R.drawable.lottery),
+                    Income(name ="Refunds",iconResId = R.drawable.refund),
+                    Income(name ="Rental", iconResId =R.drawable.rental),
+                    Income(name ="Salary",iconResId = R.drawable.salary),
+                    Income(name ="Sale", iconResId = R.drawable.sale),
+                    Income(name ="Scholarship", iconResId = R.drawable.scholarship)
+                )
+
+                val expenseList = listOf(
+                    Expense(name = "Baby", iconResId = R.drawable.milk_bottle),
+                    Expense(name = "Beauty", iconResId = R.drawable.beauty),
+                    Expense(name = "Bills", iconResId = R.drawable.bill),
+                    Expense(name = "Car", iconResId = R.drawable.car_wash),
+                    Expense(name = "Clothing", iconResId = R.drawable.clothes_hanger),
+                    Expense(name = "Education", iconResId = R.drawable.education),
+                    Expense(name = "Electronics", iconResId = R.drawable.cpu),
+                    Expense(name = "Entertainment", iconResId = R.drawable.confetti),
+                    Expense(name = "Food", iconResId = R.drawable.diet),
+                    Expense(name = "Health", iconResId = R.drawable.better_health),
+                    Expense(name = "Home", iconResId = R.drawable.house),
+                    Expense(name = "Insurance", iconResId = R.drawable.insurance),
+                    Expense(name = "Shopping", iconResId = R.drawable.bag),
+                    Expense(name = "Social", iconResId = R.drawable.social_media),
+                    Expense(name = "Sport", iconResId = R.drawable.trophy),
+                    Expense(name = "Transportation", iconResId = R.drawable.transportation)
+                )
+
+
+
+                LaunchedEffect(Unit) {
+                    // Insert initial data when the composable starts
+                    viewModel.insertInitialData(incomeList, expenseList)
+                }
+
                 val navController = rememberNavController()
                 val userDao = AppDatabase.getInstance(applicationContext).loginRegisterDao()
                 val userRepository = UserRepository(userDao)
@@ -101,44 +191,6 @@ class MainActivity : ComponentActivity() {
         }
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
-    }
-
-    // Request notification permissions for API 33+
-    private fun requestNotificationPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST_CODE)
-            } else {
-                // Permission already granted, you can send a notification here for testing
-                sendNotification(this, "Test Notification", "This is a test notification.")
-            }
-        }
-    }
-
-    // Handle the result of permission requests
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Notification permissions granted.", Toast.LENGTH_SHORT).show()
-                // Send a test notification to ensure it works
-                sendNotification(this, "Permission Granted", "You will now receive notifications.")
-            } else {
-                Toast.makeText(this, "Notification permissions denied.", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    // Send a notification
-    private fun sendNotification(context: Context, title: String, message: String) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.notification_icon)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH) // Set priority to high
-            .build()
-        notificationManager.notify(1, notification)
     }
 
     // Handle incoming intents
