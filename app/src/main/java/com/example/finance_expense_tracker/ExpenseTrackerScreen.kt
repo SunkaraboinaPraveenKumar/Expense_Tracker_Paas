@@ -53,7 +53,8 @@ fun ExpenseTrackerScreen(
     onSetBudgetClick: () -> Unit,
     onViewDebtsClick: () -> Unit,
     onViewAnalysisClick: () -> Unit,
-    settingsViewModel:SettingsViewModel
+    settingsViewModel:SettingsViewModel,
+    context: Context
 ) {
     val viewModel: ExpenseRecordsViewModel = remember {
         ExpenseRecordsViewModel(navController.context)

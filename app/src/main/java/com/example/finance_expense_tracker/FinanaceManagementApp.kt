@@ -44,7 +44,8 @@ fun FinanceManagementApp(context: Context, categoryToEdit: String?,amount:Double
                         onSetBudgetClick = { navController.navigate("setBudget") },
                         onViewDebtsClick = { navController.navigate("debts") },
                         onViewAnalysisClick = { navController.navigate("analysis") },
-                        settingsViewModel=settingsViewModel
+                        settingsViewModel=settingsViewModel,
+                        context=context
                     )
                 }
             }

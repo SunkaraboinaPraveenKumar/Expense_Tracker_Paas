@@ -2,6 +2,7 @@ import android.app.DatePickerDialog
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -117,7 +118,7 @@ fun CreditForm(onAddCredit: (Credit) -> Unit) {
         OutlinedTextField(
             value = dateOfRepayment,
             onValueChange = { dateOfRepayment = it },
-            label = { Text("Date of Repayment (YYYY-MM-DD)") },
+            label = { Text("Date of Repayment (YYYY-MM-DD)", color = if (isSystemInDarkTheme()) Color.White else Color.Black) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)

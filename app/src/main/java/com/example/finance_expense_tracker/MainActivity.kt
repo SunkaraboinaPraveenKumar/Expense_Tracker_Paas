@@ -141,13 +141,13 @@ class MainActivity : ComponentActivity() {
             permissionsNeeded.add(Manifest.permission.READ_SMS)
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(
+//                this,
+//                Manifest.permission.POST_NOTIFICATIONS
+//            ) != PackageManager.PERMISSION_GRANTED
+//        ) {
+//            permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
+//        }
 
         if (permissionsNeeded.isNotEmpty()) {
             ActivityCompat.requestPermissions(
@@ -175,6 +175,7 @@ class MainActivity : ComponentActivity() {
                     proceedToApp()
                 } else {
                     Toast.makeText(this, "SMS Permission denied.", Toast.LENGTH_SHORT).show()
+                    proceedToApp()
                     // Handle denial or provide alternative flow
                     // Example: Show explanation or disable SMS-related functionality
                 }
