@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -41,13 +40,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.financemanagementapp.R
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsMenu(
     onSettingsClick: () -> Unit,
     onDeleteResetClick: () -> Unit,
     onHelpClick: () -> Unit,
-    onAddNewCategoriesClick: () -> Unit
+    onAddNewCategoriesClick: () -> Unit,
+    onLogoutClick: () -> Unit // New parameter for logout
 ) {
     Column {
         Text(
@@ -112,6 +111,20 @@ fun SettingsMenu(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Add New Categories")
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(8.dp)
+                .clickable { onLogoutClick() } // New clickable row for logout
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.logout),
+                contentDescription = "Logout",
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Logout")
         }
     }
 }

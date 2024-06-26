@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Left arrow -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M11,16L7,12L11,8L11,11L16,11L16,13L11,13L11,16Z" />
+    <!-- Vertical rectangle (door) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M19,3L19,21L17,21L17,3L19,3Z" />
+</vector>

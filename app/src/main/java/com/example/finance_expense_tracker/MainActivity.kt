@@ -109,7 +109,8 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     viewModel.insertInitialData(incomeList, expenseList)
                 }
-
+                val database = AppDatabase.getDatabase(applicationContext)
+                val expenseDao = database.expenseDao()
                 val navController = rememberNavController()
                 val categoryToEdit = intent.getStringExtra("category_to_edit")
                 val amount = intent.getDoubleExtra("amount", 0.0)
@@ -322,9 +323,18 @@ fun SplashScreen(navController: NavHostController, context: Context) {
 // Function to check if it's the first launch
 fun isFirstLaunch(context: Context): Boolean {
     val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-    val isFirstLaunch = prefs.getBoolean("isFirstLaunch", true)
-    if (isFirstLaunch) {
-        prefs.edit().putBoolean("isFirstLaunch", false).apply()
+    var isFirstLaunch = prefs.getBoolean("isFirstLaunch", true)
+
+    if (!isFirstLaunch) {
+        // Reset isFirstLaunch if the user has already launched the app
+        val authStatePrefs = context.getSharedPreferences("auth_state", Context.MODE_PRIVATE)
+        val isAuthenticated = authStatePrefs.getBoolean("is_authenticated", false)
+
+        if (isAuthenticated) {
+            isFirstLaunch = true
+            prefs.edit().putBoolean("isFirstLaunch", isFirstLaunch).apply()
+        }
     }
+
     return isFirstLaunch
 }

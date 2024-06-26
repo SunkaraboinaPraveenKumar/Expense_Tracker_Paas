@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.finance_expense_tracker.AuthViewModel
 import com.example.finance_expense_tracker.BottomNavBar
 import kotlinx.coroutines.launch
 
@@ -37,7 +38,8 @@ import kotlinx.coroutines.launch
 fun MainLayout(
     navController: NavController,
     onViewFilterClick: () -> Unit,
-    content: @Composable () -> Unit
+    authViewModel:AuthViewModel,
+    content: @Composable () -> Unit,
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
@@ -81,6 +83,20 @@ fun MainLayout(
                     onAddNewCategoriesClick = {
                         coroutineScope.launch { drawerState.close() }
                         navController.navigate("addCategories")
+                    },
+                    onLogoutClick = {
+                        coroutineScope.launch {
+                            // Sign out the user
+                            authViewModel.logout()
+
+                            // Navigate to login screen
+                            navController.navigate("login") {
+                                // Clear back stack to avoid navigation back to protected pages
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = true
+                                }
+                            }
+                        }
                     }
                 )
             }

@@ -11,10 +11,17 @@ class AuthViewModel(
     private val firestore: FirebaseFirestore
 ) : ViewModel() {
 
-    val isAuthenticated: Boolean
+    var isAuthenticated: Boolean = false
         get() = auth.currentUser != null
 
     var errorMessage: String? = null
+    fun logout() {
+        auth.signOut()
+        isAuthenticated=false
+        saveAuthState(false) // Clear saved auth state
+        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("isFirstLaunch", true).apply()
+    }
 
     fun registerUser(username: String, password: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         auth.createUserWithEmailAndPassword(username, password)
@@ -33,6 +40,8 @@ class AuthViewModel(
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     onSuccess()
+                    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    prefs.edit().putBoolean("isFirstLaunch", false).apply()
                 } else {
                     errorMessage = task.exception?.message
                     onError(errorMessage ?: "Login failed")

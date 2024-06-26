@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.DialogProperties
 import com.example.financemanagementapp.R
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -64,6 +66,8 @@ fun AddIncomeOrExpense(
     onSave: (ExpenseRecordEntity) -> Unit,
     viewModel: ExpenseRecordsViewModel
 ) {
+    val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    val currentUser: FirebaseUser? = auth.currentUser
     var notificationAmount by remember { mutableStateOf(notificationRecord?.amount?.toString() ?: "") }
     var notificationIsIncome by remember { mutableStateOf(notificationRecord?.isIncome ?: true) }
     var accountType by remember { mutableStateOf(initialRecord?.accountType ?: "") }

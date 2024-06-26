@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -21,13 +23,15 @@ fun FinanceManagementApp(context: Context, categoryToEdit: String?,amount:Double
     val viewModel = remember { ExpenseRecordsViewModel(context) }
     val settingsViewModel=remember{SettingsViewModel(context)}
     val navController = rememberNavController()
-
+    val auth = FirebaseAuth.getInstance()
+    val firestore = FirebaseFirestore.getInstance()
+    val authViewModel= remember {AuthViewModel(context,auth,firestore)}
     var recordToEdit by remember { mutableStateOf<ExpenseRecordEntity?>(null) }
     var budgetedCategories by remember { mutableStateOf(mutableListOf<BudgetedCategory>()) }
 
     NavHost(navController = navController, startDestination = "expenseTracker") {
         composable("expenseTracker") { backStackEntry ->
-            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") },authViewModel=authViewModel) {
                 CrossfadeScreen(backStackEntry.id) {
                     val expenseRecords by viewModel.expenseRecords.collectAsState()
                     ExpenseTrackerScreen(
@@ -46,7 +50,7 @@ fun FinanceManagementApp(context: Context, categoryToEdit: String?,amount:Double
             }
         }
         composable("viewRecords") { backStackEntry ->
-            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") },authViewModel=authViewModel) {
                 CrossfadeScreen(backStackEntry.id) {
                     val expenseRecords by viewModel.expenseRecords.collectAsState()
                     ViewRecordsScreen(
@@ -65,7 +69,7 @@ fun FinanceManagementApp(context: Context, categoryToEdit: String?,amount:Double
             }
         }
         composable("setBudget") { backStackEntry ->
-            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") },authViewModel=authViewModel) {
                 CrossfadeScreen(backStackEntry.id) {
                     val expenseRecords by viewModel.expenseRecords.collectAsState()
                     SetBudgetCard(
@@ -85,7 +89,7 @@ fun FinanceManagementApp(context: Context, categoryToEdit: String?,amount:Double
             }
         }
         composable("budgetedCategories") { backStackEntry ->
-            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") },authViewModel=authViewModel) {
                 CrossfadeScreen(backStackEntry.id) {
                     val expenseRecords by viewModel.expenseRecords.collectAsState()
                     BudgetedCategoriesScreen(
@@ -122,14 +126,14 @@ fun FinanceManagementApp(context: Context, categoryToEdit: String?,amount:Double
             }
         }
         composable("debts") { backStackEntry ->
-            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") },authViewModel=authViewModel) {
                 CrossfadeScreen(backStackEntry.id) {
                     DebtsScreen(onBack = { navController.popBackStack() }, viewModel)
                 }
             }
         }
         composable("analysis") { backStackEntry ->
-            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") },authViewModel=authViewModel) {
                 CrossfadeScreen(backStackEntry.id) {
                     val expenseRecords by viewModel.expenseRecords.collectAsState()
                     MyApp(
@@ -138,6 +142,52 @@ fun FinanceManagementApp(context: Context, categoryToEdit: String?,amount:Double
                     )
                 }
             }
+        }
+        composable("main") {
+            FinanceManagementApp(
+                context = context,
+                categoryToEdit = categoryToEdit,
+                amount = amount,
+                isIncome = isIncome
+            )
+        }
+        composable("register") {
+            RegistrationScreen(
+                onRegisterSuccess = {
+                    authViewModel.saveAuthState(true)
+                    navController.navigate("login") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                },
+                authViewModel = authViewModel,
+                onNavigateToLogin = {
+                    navController.navigate("login") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable("login") {
+            LoginScreen(
+                onLoginSuccess = { username, password ->
+                    authViewModel.authenticate(
+                        username = username as String,
+                        password = password as String,
+                        onSuccess = {
+                            navController.navigate("main") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        onError = { error ->
+                            // Handle error, for example, show error message
+                        }
+                    )
+                },
+                onNavigateToRegister = {
+                    navController.navigate("register")
+                },
+                authViewModel = authViewModel
+            )
         }
         composable("filter") {
             val expenseRecords by viewModel.expenseRecords.collectAsState()
