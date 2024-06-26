@@ -15,7 +15,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ExpenseRecordEntity::class,
         BudgetedCategory::class,
         Transaction::class,
-        RegisterEntity::class,
         Income::class,
         Expense::class,
         SettingsEntity::class
@@ -28,7 +27,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun budgetedCategoryDao(): BudgetedCategoryDao
     abstract fun expenseRecordDao(): ExpenseRecordDao
-    abstract fun loginRegisterDao(): LoginRegisterDao
     abstract fun incomeDao(): IncomeDao
     abstract fun expenseDao(): ExpenseDao
 
