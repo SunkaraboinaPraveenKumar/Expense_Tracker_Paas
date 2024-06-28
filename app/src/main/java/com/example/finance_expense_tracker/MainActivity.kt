@@ -11,9 +11,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -32,7 +30,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -59,14 +56,12 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        createNotificationChannelBudget(this)
-        createNotificationChannel(this)
         FirebaseApp.initializeApp(this)
-        requestSmsPermissions()
+        createNotificationChannel(this)
+        requestPermissions()
         // Initialize Firebase Auth and Firestore
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
-
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -74,15 +69,13 @@ class MainActivity : ComponentActivity() {
         handleIncomingIntent(intent)
         setContent {
             FinanceManagementAppTheme {
-                val auth: FirebaseAuth = FirebaseAuth.getInstance()
                 val firebaseUser: FirebaseUser? = auth.currentUser
                 val currentUser = firebaseUser.toString()
 
                 val viewModel: ExpenseRecordsViewModel by viewModels {
-                    ExpenseRecordsViewModelFactory(
-                        applicationContext
-                    )
+                    ExpenseRecordsViewModelFactory(applicationContext)
                 }
+
                 val incomeList = listOf(
                     Income(name = "Awards", iconResId = R.drawable.trophy),
                     Income(name = "Coupons", iconResId = R.drawable.coupons),
@@ -113,16 +106,17 @@ class MainActivity : ComponentActivity() {
                     Expense(name = "Transportation", iconResId = R.drawable.transportation)
                 )
 
+
                 LaunchedEffect(Unit) {
                     viewModel.insertInitialData(incomeList, expenseList)
                 }
-                val database = AppDatabase.getDatabase(applicationContext)
-                val expenseDao = database.expenseDao()
+
                 val navController = rememberNavController()
                 val categoryToEdit = intent.getStringExtra("category_to_edit")
                 val amount = intent.getDoubleExtra("amount", 0.0)
                 val isIncome = intent.getBooleanExtra("isIncome", true)
-                val authViewModel=AuthViewModel(applicationContext,auth,firestore)
+                val authViewModel = AuthViewModel(applicationContext, auth, firestore)
+
                 AuthenticationFlow(
                     navController,
                     authViewModel,
@@ -136,17 +130,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun requestSmsPermissions() {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun requestPermissions() {
         val permissions = arrayOf(
             Manifest.permission.RECEIVE_SMS,
             Manifest.permission.READ_SMS,
-            Manifest.permission.SEND_SMS
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.POST_NOTIFICATIONS // Added notification permission
         )
         ActivityCompat.requestPermissions(this, permissions, SMS_PERMISSION_REQUEST_CODE)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             SMS_PERMISSION_REQUEST_CODE -> {
@@ -160,7 +160,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel(context: Context) {
@@ -189,6 +188,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AuthenticationFlow(
@@ -257,7 +257,6 @@ fun AuthenticationFlow(
 fun SplashScreen(navController: NavHostController, context: Context) {
     LaunchedEffect(Unit) {
         delay(3000) // Delay for 3 seconds
-        // Check if it's the first launch and navigate accordingly
         val destination = if (isFirstLaunch(context)) "register" else "main"
         navController.navigate(destination) {
             popUpTo("splash") { inclusive = true }
@@ -286,7 +285,6 @@ fun SplashScreen(navController: NavHostController, context: Context) {
     }
 }
 
-// Function to check if it's the first launch
 fun isFirstLaunch(context: Context): Boolean {
     val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     var isFirstLaunch = prefs.getBoolean("isFirstLaunch", true)
@@ -303,44 +301,4 @@ fun isFirstLaunch(context: Context): Boolean {
     }
 
     return isFirstLaunch
-}
-
-
-@Composable
-fun RequestPermissions(
-    context: Context,
-    onPermissionsResult: (Boolean) -> Unit
-) {
-    val permissionsLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val allGranted = permissions.values.all { it }
-        onPermissionsResult(allGranted)
-    }
-
-    LaunchedEffect(Unit) {
-        val permissionsNeeded = mutableListOf<String>()
-
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_SMS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            permissionsNeeded.add(Manifest.permission.READ_SMS)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-
-        if (permissionsNeeded.isNotEmpty()) {
-            permissionsLauncher.launch(permissionsNeeded.toTypedArray())
-        } else {
-            onPermissionsResult(true)
-        }
-    }
 }

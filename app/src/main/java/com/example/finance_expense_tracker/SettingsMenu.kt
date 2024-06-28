@@ -70,20 +70,20 @@ fun SettingsMenu(
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Settings")
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(8.dp)
-                .clickable { onDeleteResetClick() }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.delete),
-                contentDescription = "Delete and Reset",
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Delete")
-        }
+//        Row(
+//            verticalAlignment = Alignment.CenterVertically,
+//            modifier = Modifier
+//                .padding(8.dp)
+//                .clickable { onDeleteResetClick() }
+//        ) {
+//            Icon(
+//                painter = painterResource(id = R.drawable.delete),
+//                contentDescription = "Delete and Reset",
+//                modifier = Modifier.size(24.dp)
+//            )
+//            Spacer(modifier = Modifier.width(8.dp))
+//            Text(text = "Delete")
+//        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -301,5 +301,3 @@ fun AddNewCategoryDialog(
         }
     )
 }
-
-
