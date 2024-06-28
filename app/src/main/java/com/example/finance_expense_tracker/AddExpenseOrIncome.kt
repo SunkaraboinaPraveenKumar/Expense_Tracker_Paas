@@ -1,5 +1,4 @@
 package com.example.finance_expense_tracker
-
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -11,13 +10,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -67,7 +64,8 @@ fun AddIncomeOrExpense(
     viewModel: ExpenseRecordsViewModel
 ) {
     val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    val currentUser: FirebaseUser? = auth.currentUser
+    val firebaseUser: FirebaseUser? = auth.currentUser
+    val currentUser = firebaseUser.toString()
     var notificationAmount by remember { mutableStateOf(notificationRecord?.amount?.toString() ?: "") }
     var notificationIsIncome by remember { mutableStateOf(notificationRecord?.isIncome ?: true) }
     var accountType by remember { mutableStateOf(initialRecord?.accountType ?: "") }
@@ -235,7 +233,7 @@ fun AddIncomeOrExpense(
                 backgroundColor = Color(0xFFF0F8FF)
             )
         }
-    val fgText=if(isSystemInDarkTheme()) LocalTextStyle.current.copy(color = Color.White) else LocalTextStyle.current.copy(color = textColor)
+        val fgText=if(isSystemInDarkTheme()) LocalTextStyle.current.copy(color = Color.White) else LocalTextStyle.current.copy(color = textColor)
         TextField(
             value = notes,
             onValueChange = { notes = it },
@@ -295,7 +293,7 @@ fun SelectOptionField(
     text: String,
     iconList: List<Icon>,
     textColor: Color,
-    backgroundColor: Color // Add backgroundColor parameter
+    backgroundColor: Color
 ) {
     var showDialog by remember { mutableStateOf(false) }
     val selectedIcon = iconList.find { it.name == selectedOption }?.resourceId
@@ -304,7 +302,7 @@ fun SelectOptionField(
         modifier = Modifier
             .padding(vertical = 8.dp)
             .clickable { showDialog = true }
-            .background(color = backgroundColor) // Use backgroundColor parameter here
+            .background(color = backgroundColor)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -315,7 +313,7 @@ fun SelectOptionField(
                     contentDescription = null,
                     modifier = Modifier
                         .size(24.dp)
-                        .padding(end = 8.dp) // Space between icon and text
+                        .padding(end = 8.dp)
                 )
             }
             Text(
@@ -334,15 +332,14 @@ fun SelectOptionField(
                 Text(text = text)
             },
             text = {
-                // Use calculated height to determine the LazyColumn height
-                val calculatedHeight = 10 * 48.dp // Assuming each item takes ~48.dp
+                // Calculate item height assuming each item takes 48.dp
+                val itemHeight = 48.dp
+                val maxHeight = 12 * itemHeight // Max height for 12 items
 
                 LazyColumn(
-                    modifier = if (options.size > 10) {
-                        Modifier.height(calculatedHeight)
-                    } else {
-                        Modifier.wrapContentHeight()
-                    }
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .heightIn(max = maxHeight)
                 ) {
                     items(options) { option ->
                         val icon = iconList.find { it.name == option }
@@ -367,12 +364,10 @@ fun SelectOptionField(
             },
             properties = DialogProperties(
                 dismissOnClickOutside = true
-            ),
-            modifier = Modifier.fillMaxHeight(0.8f) // Constrain dialog height
+            )
         )
     }
 }
-
 
 @Composable
 fun DropdownMenuItem(

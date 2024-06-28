@@ -1,5 +1,4 @@
 package com.example.finance_expense_tracker
-
 import SettingsViewModel
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -24,7 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.lightColors
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
@@ -59,7 +58,6 @@ fun ViewRecordsScreen(
     viewModel: ExpenseRecordsViewModel, // ViewModel to fetch expense records
     onEdit: (ExpenseRecordEntity) -> Unit,
     onDelete: (Long) -> Unit,
-    onBack: () -> Unit,
     settingsViewModel:SettingsViewModel
 ) {
     // Collect expenseRecords as State from the ViewModel
@@ -246,7 +244,7 @@ fun HeaderRecord(
 
         IconButton(onClick = { showDialog = true }) {
             Icon(
-                imageVector = Icons.Default.List,
+                imageVector = Icons.Default.FilterList,
                 contentDescription = "Filter",
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
@@ -389,13 +387,17 @@ fun FilterDialog(
     onFilterOptionSelected: (FilterOption) -> Unit,
     onDismissRequest: () -> Unit
 ) {
-    androidx.compose.material.MaterialTheme( // Apply MaterialTheme for styling
-        colors = if(isSystemInDarkTheme()) darkThemeColors else lightThemeColors // Use custom dark theme colors
-    ) {
+    val colors = if (isSystemInDarkTheme()) {
+        darkThemeColors
+    } else {
+        lightThemeColors
+    }
+
+    androidx.compose.material.MaterialTheme(colors = colors) {
         AlertDialog(
             onDismissRequest = onDismissRequest,
             title = {
-                Text(text = "Select Filter Option", color = if(isSystemInDarkTheme()) Color.White else Color.Black) // White text color
+                Text(text = "Select Filter Option", color = colors.onSurface)
             },
             text = {
                 Column {
@@ -414,11 +416,15 @@ fun FilterDialog(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Selected",
-                                    tint = Color.Green
+                                    tint = colors.primary // Use primary color for the selected icon
                                 )
                             }
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = option.name, fontSize = 18.sp, color = if(isSystemInDarkTheme()) Color.White else Color.Black) // White text color
+                            Text(
+                                text = option.name,
+                                fontSize = 18.sp,
+                                color = colors.onSurface // Text color based on theme
+                            )
                         }
                     }
                 }
@@ -430,19 +436,18 @@ fun FilterDialog(
     }
 }
 
-private val darkThemeColors = darkColors( // Define custom dark theme colors
-    primary = Color.White, // Title and selected text color
-    onPrimary = Color.Black, // Background color
-    background = Color.Black, // Background color
-    surface = Color.Black, // Background color
-    onBackground = Color.White, // Dialog content text color
-    onSurface = Color.White // Dialog content text color
-)
 private val lightThemeColors = lightColors(
-    primary = Color.Black, // Title and selected text color
-    onPrimary = Color.White, // Text on primary color
-    background = Color.White, // Background color
-    surface = Color.White, // Surface color
-    onBackground = Color.Black, // Text on background
-    onSurface = Color.Black // Text on surface
+    background = Color.LightGray,
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black,
+    primary = Color.Blue // Adjust these colors as per your theme
+)
+
+private val darkThemeColors = darkColors(
+    background = Color.Black,
+    onBackground = Color.White,
+    surface = Color.DarkGray,
+    onSurface = Color.White,
+    primary = Color.Cyan // Adjust these colors as per your theme
 )

@@ -11,7 +11,9 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -39,6 +41,7 @@ import com.example.finance_expense_tracker.ui.theme.FinanceManagementAppTheme
 import com.example.financemanagementapp.R
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 
@@ -58,8 +61,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         createNotificationChannelBudget(this)
         createNotificationChannel(this)
-        requestPermissions()
         FirebaseApp.initializeApp(this)
+        requestSmsPermissions()
         // Initialize Firebase Auth and Firestore
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
@@ -71,6 +74,10 @@ class MainActivity : ComponentActivity() {
         handleIncomingIntent(intent)
         setContent {
             FinanceManagementAppTheme {
+                val auth: FirebaseAuth = FirebaseAuth.getInstance()
+                val firebaseUser: FirebaseUser? = auth.currentUser
+                val currentUser = firebaseUser.toString()
+
                 val viewModel: ExpenseRecordsViewModel by viewModels {
                     ExpenseRecordsViewModelFactory(
                         applicationContext
@@ -129,73 +136,31 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun requestPermissions() {
-        val permissionsNeeded = mutableListOf<String>()
-
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_SMS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            permissionsNeeded.add(Manifest.permission.READ_SMS)
-        }
-
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(
-//                this,
-//                Manifest.permission.POST_NOTIFICATIONS
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) {
-//            permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
-//        }
-
-        if (permissionsNeeded.isNotEmpty()) {
-            ActivityCompat.requestPermissions(
-                this,
-                permissionsNeeded.toTypedArray(),
-                SMS_PERMISSION_REQUEST_CODE
-            )
-            proceedToApp()
-        } else {
-            proceedToApp()
-        }
+    private fun requestSmsPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.RECEIVE_SMS,
+            Manifest.permission.READ_SMS,
+            Manifest.permission.SEND_SMS
+        )
+        ActivityCompat.requestPermissions(this, permissions, SMS_PERMISSION_REQUEST_CODE)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             SMS_PERMISSION_REQUEST_CODE -> {
-                if (permissions.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "SMS Permission granted.", Toast.LENGTH_SHORT).show()
+                val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+                if (allGranted) {
                     proceedToApp()
                 } else {
-                    Toast.makeText(this, "SMS Permission denied.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Permissions denied. Some features may not work.", Toast.LENGTH_SHORT).show()
                     proceedToApp()
-                    // Handle denial or provide alternative flow
-                    // Example: Show explanation or disable SMS-related functionality
-                }
-            }
-
-            NOTIFICATION_PERMISSION_REQUEST_CODE -> {
-                // Handle notification permission if needed
-                if (permissions.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "Notification Permission granted.", Toast.LENGTH_SHORT)
-                        .show()
-                    // Proceed with any actions that require this permission
-                } else {
-                    Toast.makeText(this, "Notification Permission denied.", Toast.LENGTH_SHORT)
-                        .show()
-                    // Handle denial or provide alternative flow
-                    // Example: Show explanation or disable notification-related functionality
                 }
             }
         }
     }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel(context: Context) {
@@ -338,4 +303,44 @@ fun isFirstLaunch(context: Context): Boolean {
     }
 
     return isFirstLaunch
+}
+
+
+@Composable
+fun RequestPermissions(
+    context: Context,
+    onPermissionsResult: (Boolean) -> Unit
+) {
+    val permissionsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        onPermissionsResult(allGranted)
+    }
+
+    LaunchedEffect(Unit) {
+        val permissionsNeeded = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_SMS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsNeeded.add(Manifest.permission.READ_SMS)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        if (permissionsNeeded.isNotEmpty()) {
+            permissionsLauncher.launch(permissionsNeeded.toTypedArray())
+        } else {
+            onPermissionsResult(true)
+        }
+    }
 }

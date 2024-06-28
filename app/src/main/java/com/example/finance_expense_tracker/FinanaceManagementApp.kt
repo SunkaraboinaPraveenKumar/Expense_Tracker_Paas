@@ -63,7 +63,6 @@ fun FinanceManagementApp(context: Context, categoryToEdit: String?,amount:Double
                         onDelete = { recordId ->
                             viewModel.deleteExpenseRecord(recordId)
                         },
-                        onBack = { navController.popBackStack() },
                         settingsViewModel=settingsViewModel
                     )
                 }
